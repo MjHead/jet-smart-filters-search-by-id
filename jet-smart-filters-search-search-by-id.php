@@ -1,6 +1,6 @@
 <?php
 /**
- * Plugin Name: JetSmartFilters - search by post ID
+ * Plugin Name: JetSmartFilters - search posts by ID
  * Plugin URI:  https://crocoblock.com/
  * Description: Allow to search by post ID in the JetSmartFilter's search filter
  * Version:     1.0.0
