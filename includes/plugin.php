@@ -66,7 +66,11 @@ class Plugin {
 
 			global $wpdb;
 
-			$where .= " OR ( {$wpdb->posts}.ID = {$this->search_query} AND {$wpdb->posts}.post_status = 'publish' )";
+			if ( $exact_match = apply_filters( 'jet-smart-filters-search-by-id/exact-match', true ) ) {
+				$where .= " OR ( {$wpdb->posts}.ID = {$this->search_query} AND {$wpdb->posts}.post_status = 'publish' )";
+			} else {
+				$where .= " OR ( {$wpdb->posts}.ID LIKE '%{$this->search_query}%' AND {$wpdb->posts}.post_status = 'publish' )";
+			}
 
 			$this->search_query = null;
 			remove_filter( 'posts_where', array( $this, 'add_id_clause' ) );
