@@ -53,14 +53,18 @@ class Plugin {
 		foreach ( $data as $key => $value ) {
 			if ( false !== strpos( $key, '|search' ) ) {
 				$this->search_query = absint( $value );
-				add_filter( 'posts_where', array( $this, 'add_id_clause' ) );
+				add_filter( 'posts_where', array( $this, 'add_id_clause' ), 10, 2 );
 			}
 		}
 
 		return $query;
 	}
 
-	public function add_id_clause( $where ) {
+	public function add_id_clause( $where, $query ) {
+
+		if ( empty( $query->query_vars['jet_smart_filters'] ) && empty( $query->query_vars['jsf'] ) ) {
+			return $where;
+		}
 
 		if ( $this->search_query ) {
 
@@ -73,7 +77,7 @@ class Plugin {
 			}
 
 			$this->search_query = null;
-			remove_filter( 'posts_where', array( $this, 'add_id_clause' ) );
+			remove_filter( 'posts_where', array( $this, 'add_id_clause' ), 10, 2 );
 
 		}
 
