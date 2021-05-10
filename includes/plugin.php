@@ -70,11 +70,34 @@ class Plugin {
 
 			global $wpdb;
 
+			$where .= " OR ( ";
+
 			if ( $exact_match = apply_filters( 'jet-smart-filters-search-by-id/exact-match', true ) ) {
-				$where .= " OR ( {$wpdb->posts}.ID = {$this->search_query} AND {$wpdb->posts}.post_status = 'publish' )";
+				$where .= "{$wpdb->posts}.ID = {$this->search_query}";
 			} else {
-				$where .= " OR ( {$wpdb->posts}.ID LIKE '%{$this->search_query}%' AND {$wpdb->posts}.post_status = 'publish' )";
+				$where .= "{$wpdb->posts}.ID LIKE '%{$this->search_query}%'";
 			}
+
+			if ( ! empty( $query->query['post_type'] ) ) {
+				if ( is_array( $query->query['post_type'] ) ) {
+
+					$post_types = array_map( function( $item ) {
+						$item = esc_sql( $item );
+						return "'{$item}'";
+					}, $query->query['post_type'] );
+
+					$post_types = implode( ', ', $post_types );
+					$where .= " AND {$wpdb->posts}.post_type IN ( {$post_types} )";
+
+				} else {
+
+					$post_type = esc_sql( $query->query['post_type'] );
+					$where .= " AND {$wpdb->posts}.post_type IN ( {$post_type} )";
+
+				}
+			}
+
+			$where .= " AND {$wpdb->posts}.post_status = 'publish' )";
 
 			$this->search_query = null;
 			remove_filter( 'posts_where', array( $this, 'add_id_clause' ), 10, 2 );
