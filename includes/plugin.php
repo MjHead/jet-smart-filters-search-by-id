@@ -92,7 +92,7 @@ class Plugin {
 				} else {
 
 					$post_type = esc_sql( $query->query['post_type'] );
-					$where .= " AND {$wpdb->posts}.post_type IN ( {$post_type} )";
+					$where .= " AND {$wpdb->posts}.post_type IN ( '{$post_type}' )";
 
 				}
 			}
