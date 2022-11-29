@@ -48,7 +48,7 @@ class Plugin {
 	}
 
 	public function maybe_hook_id_clause( $query ) {
-		$data = isset( $_REQUEST['query'] ) ? $_REQUEST['query'] : array();
+		$data = isset( $_REQUEST['query'] ) ? $_REQUEST['query'] : $_REQUEST;
 
 		foreach ( $data as $key => $value ) {
 			if ( false !== strpos( $key, '|search' ) ) {
@@ -62,47 +62,43 @@ class Plugin {
 
 	public function add_id_clause( $where, $query ) {
 
-		if ( empty( $query->query_vars['jet_smart_filters'] ) && empty( $query->query_vars['jsf'] ) ) {
+		if ( ! $this->search_query || ! $query->get( 'jet_smart_filters' ) ) {
 			return $where;
 		}
 
-		if ( $this->search_query ) {
+		global $wpdb;
 
-			global $wpdb;
+		$where .= " OR ( ";
 
-			$where .= " OR ( ";
-
-			if ( $exact_match = apply_filters( 'jet-smart-filters-search-by-id/exact-match', true ) ) {
-				$where .= "{$wpdb->posts}.ID = {$this->search_query}";
-			} else {
-				$where .= "{$wpdb->posts}.ID LIKE '%{$this->search_query}%'";
-			}
-
-			if ( ! empty( $query->query['post_type'] ) ) {
-				if ( is_array( $query->query['post_type'] ) ) {
-
-					$post_types = array_map( function( $item ) {
-						$item = esc_sql( $item );
-						return "'{$item}'";
-					}, $query->query['post_type'] );
-
-					$post_types = implode( ', ', $post_types );
-					$where .= " AND {$wpdb->posts}.post_type IN ( {$post_types} )";
-
-				} else {
-
-					$post_type = esc_sql( $query->query['post_type'] );
-					$where .= " AND {$wpdb->posts}.post_type IN ( '{$post_type}' )";
-
-				}
-			}
-
-			$where .= " AND {$wpdb->posts}.post_status = 'publish' )";
-
-			$this->search_query = null;
-			remove_filter( 'posts_where', array( $this, 'add_id_clause' ), 10, 2 );
-
+		if ( $exact_match = apply_filters( 'jet-smart-filters-search-by-id/exact-match', true ) ) {
+			$where .= "{$wpdb->posts}.ID = {$this->search_query}";
+		} else {
+			$where .= "{$wpdb->posts}.ID LIKE '%{$this->search_query}%'";
 		}
+
+		if ( ! empty( $query->query['post_type'] ) ) {
+			if ( is_array( $query->query['post_type'] ) ) {
+
+				$post_types = array_map( function( $item ) {
+					$item = esc_sql( $item );
+					return "'{$item}'";
+				}, $query->query['post_type'] );
+
+				$post_types = implode( ', ', $post_types );
+				$where .= " AND {$wpdb->posts}.post_type IN ( {$post_types} )";
+
+			} else {
+
+				$post_type = esc_sql( $query->query['post_type'] );
+				$where .= " AND {$wpdb->posts}.post_type IN ( '{$post_type}' )";
+
+			}
+		}
+
+		$where .= " AND {$wpdb->posts}.post_status = 'publish' )";
+
+		$this->search_query = null;
+		remove_filter( 'posts_where', array( $this, 'add_id_clause' ), 10, 2 );
 
 		return $where;
 
